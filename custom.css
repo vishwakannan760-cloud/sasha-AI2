@@ -1,0 +1,249 @@
+/* ==========================================================================
+   SASHA AI — Futuristic Neon Dark Theme Stylesheet
+   Tagline: "Your AI. Your Companion. Your Future."
+   ========================================================================== */
+
+:root {
+  --bg-primary: #07090e;
+  --bg-secondary: #0c1017;
+  --bg-tertiary: #131926;
+  --bg-card: #0f1522;
+  --bg-input: #111724;
+  
+  --accent-cyan: #00d2ff;
+  --accent-blue: #38bdf8;
+  --accent-purple: #a855f7;
+  --accent-violet: #8b5cf6;
+  --accent-glow: rgba(139, 92, 246, 0.25);
+  
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border-subtle: rgba(56, 189, 248, 0.12);
+  --border-glow: rgba(168, 85, 247, 0.35);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(7, 9, 14, 0.6);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.6);
+}
+
+/* Neon Glow Utilities */
+.neon-glow-purple {
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.25), 0 0 50px rgba(139, 92, 246, 0.12);
+}
+
+.neon-glow-cyan {
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.25), 0 0 50px rgba(0, 210, 255, 0.12);
+}
+
+.neon-border-glow {
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+}
+
+.neon-text-gradient {
+  background: linear-gradient(135deg, #00d2ff 0%, #38bdf8 40%, #a855f7 80%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-glow-sphere {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(56, 189, 248, 0.08) 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(40px);
+  z-index: 0;
+  animation: pulse-slow 8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-slow {
+  0% { transform: scale(0.9) translate(-50%, -50%); opacity: 0.7; }
+  100% { transform: scale(1.1) translate(-50%, -50%); opacity: 1; }
+}
+
+@keyframes float-subtle {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float-subtle 4s ease-in-out infinite;
+}
+
+/* Shimmer / Typing dot animation */
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #38bdf8;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(3) { animation-delay: 0s; }
+
+/* Markdown styling inside AI messages */
+.prose-sasha {
+  color: #e2e8f0;
+  line-height: 1.7;
+}
+
+.prose-sasha p {
+  margin-bottom: 0.85rem;
+}
+
+.prose-sasha p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-sasha h1, .prose-sasha h2, .prose-sasha h3, .prose-sasha h4 {
+  color: #f8fafc;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.6rem;
+}
+
+.prose-sasha h1 { font-size: 1.45rem; }
+.prose-sasha h2 { font-size: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.3rem; }
+.prose-sasha h3 { font-size: 1.1rem; color: #38bdf8; }
+
+.prose-sasha ul, .prose-sasha ol {
+  margin-left: 1.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.prose-sasha li {
+  margin-bottom: 0.35rem;
+}
+
+.prose-sasha ul { list-style-type: disc; }
+.prose-sasha ol { list-style-type: decimal; }
+
+.prose-sasha strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.prose-sasha blockquote {
+  border-left: 3px solid #8b5cf6;
+  padding-left: 1rem;
+  margin: 0.8rem 0;
+  color: #cbd5e1;
+  background: rgba(139, 92, 246, 0.07);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+}
+
+.prose-sasha table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.prose-sasha th {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  color: #38bdf8;
+}
+
+.prose-sasha td {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.5rem 0.75rem;
+}
+
+/* Code Blocks */
+.code-container {
+  position: relative;
+  margin: 1rem 0;
+  border-radius: 0.75rem;
+  background: #090d16;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.9rem;
+  background: #0d1320;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.code-container pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+}
+
+.prose-sasha :not(pre) > code {
+  background: rgba(139, 92, 246, 0.15);
+  color: #38bdf8;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.85em;
+  font-family: monospace;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+/* Glassmorphism surfaces */
+.glass-panel {
+  background: rgba(15, 21, 34, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s ease;
+}
+.glass-panel-hover:hover {
+  background: rgba(22, 30, 48, 0.85);
+  border-color: rgba(168, 85, 247, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(139, 92, 246, 0.15);
+}
+
+/* Recording Pulse */
+@keyframes mic-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.recording-active {
+  background-color: #ef4444 !important;
+  color: white !important;
+  animation: mic-pulse 1.5s infinite;
+}

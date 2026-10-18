@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SASHA AI — Your AI. Your Companion. Your Future.</title>
+  
+  <!-- Favicon / Modern Sparkle SVG -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            sasha: {
+              black: '#07090e',
+              dark: '#0a0d14',
+              navy: '#0d1117',
+              surface: '#0f141f',
+              card: '#131926',
+              input: '#101522',
+              cyan: '#00d2ff',
+              blue: '#38bdf8',
+              purple: '#a855f7',
+              violet: '#8b5cf6'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Lucide Vector Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Marked.js Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="bg-[#07090e] text-slate-100 font-sans antialiased h-screen flex overflow-hidden select-none">
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="fixed inset-0 bg-black/70 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
+  <!-- ======================================================================
+       LEFT SIDEBAR (Collapsible Desktop & Drawer Mobile)
+       ====================================================================== -->
+  <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 md:w-64 bg-[#0a0d14] border-r border-slate-800/80 flex flex-col justify-between transition-all duration-300 ease-in-out -translate-x-full md:translate-x-0 shrink-0">
+    
+    <!-- Top Brand & Action -->
+    <div class="p-4 space-y-4 border-b border-slate-800/60">
+      <!-- Brand Identity -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-cyan-400 p-0.5 shadow-lg shadow-purple-600/30">
+            <div class="w-full h-full bg-[#0a0d14] rounded-[10px] flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-base font-extrabold tracking-tight text-white">SASHA AI</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Online & Ready"></span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-mono tracking-tight">Your AI Companion</p>
+          </div>
+        </div>
+
+        <!-- Desktop Collapse Button -->
+        <button id="desktopCollapseBtn" class="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors" title="Toggle sidebar width">
+          <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- New Chat Button -->
+      <button id="newChatBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 hover:from-purple-600/30 hover:to-blue-600/30 text-white border border-purple-500/30 shadow-lg shadow-purple-600/10 transition-all duration-200 group active:scale-[0.98]">
+        <div class="flex items-center gap-2 text-xs font-semibold">
+          <i data-lucide="plus" class="w-4 h-4 text-cyan-400 group-hover:rotate-90 transition-transform"></i>
+          <span>New Chat</span>
+        </div>
+        <kbd class="text-[10px] font-mono text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700/60">Ctrl K</kbd>
+      </button>
+
+      <!-- Search Input -->
+      <div class="relative">
+        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+        <input type="text" id="searchChatsInput" placeholder="Search conversations..." class="w-full bg-[#111724] border border-slate-800/80 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400/60 transition-colors" />
+      </div>
+    </div>
+
+    <!-- Navigation Views -->
+    <div class="px-3 pt-3 pb-2 space-y-1">
+      <button class="sidebar-nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all" data-view="chat">
+        <i data-lucide="message-square" class="w-4 h-4"></i>
+        <span>AI Chat</span>
+      </button>
+      <button class="sidebar-nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-slate-400 hover:text-slate-200" data-view="learning">
+        <i data-lucide="graduation-cap" class="w-4 h-4 text-purple-400"></i>
+        <span>Learning Assistant</span>
+      </button>
+      <button class="sidebar-nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-slate-400 hover:text-slate-200" data-view="projects">
+        <i data-lucide="folder-kanban" class="w-4 h-4 text-cyan-400"></i>
+        <span>My Projects</span>
+      </button>
+    </div>
+
+    <!-- Conversation History List (Scrollable) -->
+    <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1 border-t border-slate-800/60">
+      <div class="flex items-center justify-between px-3 py-1.5">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recent Chats</span>
+        <span class="text-[10px] text-slate-600 font-mono">SQLite</span>
+      </div>
+      <div id="conversationList" class="space-y-1">
+        <!-- Rendered dynamically by chat.js -->
+      </div>
+    </div>
+
+    <!-- Bottom User Profile & Settings Area -->
+    <div class="p-3 border-t border-slate-800/80 bg-[#0c1017]/80 space-y-2">
+      <!-- Dark mode & settings quick bar -->
+      <div class="flex items-center justify-between px-2 text-xs text-slate-400">
+        <div class="flex items-center gap-1.5 text-slate-400">
+          <i data-lucide="moon" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span class="text-[11px]">Dark Mode</span>
+        </div>
+        <button id="bottomSettingsBtn" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors" title="Open Settings">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- User Profile Card -->
+      <div class="sidebar-nav-item flex items-center gap-3 p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 cursor-pointer hover:border-purple-500/30 transition-all" data-view="settings">
+        <div class="relative w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-purple-600 p-0.5 shrink-0">
+          <div class="w-full h-full bg-[#0a0d14] rounded-full flex items-center justify-center text-xs font-bold text-white">
+            DL
+          </div>
+          <span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-400 border border-[#0a0d14]"></span>
+        </div>
+        <div class="overflow-hidden flex-1">
+          <h4 id="profileUserName" class="text-xs font-semibold text-white truncate">Developer Learner</h4>
+          <p id="profileUserRole" class="text-[10px] text-slate-400 truncate">Python Full Stack</p>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ======================================================================
+       MAIN CONTENT VIEWPORT
+       ====================================================================== -->
+  <main class="flex-1 flex flex-col h-screen overflow-hidden bg-[#07090e] relative">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-14 px-4 md:px-6 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-[#07090e]/80 backdrop-blur-md z-30">
+      
+      <!-- Left: Mobile Toggle & Title -->
+      <div class="flex items-center gap-3">
+        <button id="toggleSidebarBtn" class="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-lg bg-gradient-to-tr from-purple-600 to-cyan-400 p-0.5">
+            <div class="w-full h-full bg-[#07090e] rounded-[6px] flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-white">SASHA AI</span>
+        </div>
+      </div>
+
+      <!-- Right: Active Model Badge & Direct Chat Button -->
+      <div class="flex items-center gap-2.5">
+        <div id="activeModelBadge" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono">
+          ✨ SASHA Smart Engine
+        </div>
+
+        <button id="topDirectChatBtn" class="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-300 flex items-center gap-1.5 transition-all">
+          <i data-lucide="message-square" class="w-3.5 h-3.5 text-cyan-400"></i>
+          <span>Direct Chat</span>
+        </button>
+      </div>
+
+    </header>
+
+    <!-- Chat View Wrapper -->
+    <div id="chatViewWrapper" class="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden relative">
+
+      <!-- Scrollable Messages Container -->
+      <div id="chatScrollArea" class="flex-1 overflow-y-auto">
+        <div id="chatMessagesContainer">
+          <!-- Dynamically filled with Welcome Hero or Messages by chat.js -->
+        </div>
+      </div>
+
+      <!-- Floating Bottom Input Capsule (Inspired by Screenshot) -->
+      <div class="shrink-0 p-4 md:p-6 bg-gradient-to-t from-[#07090e] via-[#07090e]/95 to-transparent z-20">
+        <div class="max-w-3xl mx-auto space-y-2">
+
+          <!-- Main Input Capsule -->
+          <div class="glass-panel p-2.5 md:p-3 rounded-2xl md:rounded-3xl border border-slate-800 focus-within:border-purple-500/50 focus-within:shadow-xl focus-within:shadow-purple-500/10 transition-all duration-300">
+            
+            <!-- Capsule Top Bar: Model Selector & Attachments Preview -->
+            <div class="flex items-center justify-between px-2 pb-2 border-b border-slate-800/60 mb-2">
+              <div class="flex items-center gap-2">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyan-400"></i>
+                <select id="modelSelectDropdown" class="bg-transparent text-xs text-slate-300 font-mono focus:outline-none cursor-pointer">
+                  <option value="sasha_demo" class="bg-slate-900 text-white">SASHA Smart Engine (Demo)</option>
+                  <option value="gemini-1.5-flash" class="bg-slate-900 text-white">Gemini 1.5 Flash (Fast)</option>
+                  <option value="gemini-1.5-pro" class="bg-slate-900 text-white">Gemini 1.5 Pro (Deep)</option>
+                </select>
+              </div>
+
+              <!-- Attachment preview container -->
+              <div id="attachmentChips" class="hidden flex items-center gap-1.5 overflow-x-auto"></div>
+            </div>
+
+            <!-- Input Row -->
+            <div class="flex items-end gap-2 px-1">
+              <!-- File Attachment Button -->
+              <button id="attachFileBtn" class="p-2 text-slate-400 hover:text-cyan-400 rounded-xl hover:bg-slate-800/60 transition-colors shrink-0" title="Attach Python/Code/Text File">
+                <i data-lucide="paperclip" class="w-4 h-4"></i>
+              </button>
+              <input type="file" id="fileAttachmentInput" multiple accept=".py,.js,.html,.css,.txt,.json,.md" class="hidden" />
+
+              <!-- Multiline Textarea -->
+              <textarea id="chatInput" rows="1" placeholder="Send a message to SASHA AI..." class="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none max-h-40 leading-relaxed font-sans py-1.5"></textarea>
+
+              <!-- Voice Input Microphone Button -->
+              <button id="micBtn" class="p-2 text-slate-400 hover:text-purple-400 rounded-xl hover:bg-slate-800/60 transition-all shrink-0" title="Voice Input (Speech-to-Text)">
+                <i data-lucide="mic" class="w-4 h-4"></i>
+              </button>
+
+              <!-- Send Button -->
+              <button id="sendMsgBtn" disabled class="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white shadow-lg shadow-purple-600/20 opacity-40 cursor-not-allowed transition-all shrink-0 active:scale-95" title="Send message (Enter)">
+                <i data-lucide="arrow-up" class="w-4 h-4 stroke-[2.5]"></i>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Bottom Disclaimer -->
+          <p class="text-[11px] text-center text-slate-500 select-none">
+            SASHA AI can make mistakes. Consider verifying important code and concepts.
+          </p>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Dynamic View Wrapper (For Learning Assistant, My Projects, Settings) -->
+    <div id="dynamicViewWrapper" class="hidden flex-1 overflow-y-auto">
+      <div id="mainViewContainer">
+        <!-- Rendered dynamically by learning.js, projects.js, or settings.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Client Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/learning.js"></script>
+  <script src="/static/js/projects.js"></script>
+  <script src="/static/js/settings.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

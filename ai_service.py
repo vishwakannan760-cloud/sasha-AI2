@@ -1,0 +1,298 @@
+"""
+SASHA AI — AI Service & Personality Engine
+------------------------------------------
+Handles conversational generation, personality framing, multi-lingual adaptation
+(English, Tamil, Tanglish), and seamless switching between:
+1. Google Gemini API (if GEMINI_API_KEY is provided)
+2. OpenAI / Groq API (if configured)
+3. Smart Built-in SASHA Engine (Intelligent demo & offline mode)
+
+Tagline: "Your AI. Your Companion. Your Future."
+"""
+
+import os
+import json
+import re
+import urllib.request
+import urllib.error
+from typing import Dict, Any, List, Optional
+
+# Auto-load .env file if present
+ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+if os.path.exists(ENV_PATH):
+    try:
+        with open(ENV_PATH, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    k = k.strip()
+                    v = v.strip().strip("'\"")
+                    if k and k not in os.environ:
+                        os.environ[k] = v
+    except Exception:
+        pass
+
+SYSTEM_PROMPT = """You are SASHA AI, a friendly, supportive, patient, and highly intelligent personal AI companion and mentor.
+Tagline: "Your AI. Your Companion. Your Future."
+
+Your user is an aspiring software developer learning Python Full Stack Development and English communication for IT careers.
+
+Communication Guidelines:
+1. Tone: Warm, encouraging, patient, and intellectually clear. Never make the user feel bad for asking beginner questions.
+2. Technical explanations: Break complex programming concepts into bite-sized steps with relatable real-world analogies.
+3. Code examples: Provide clean, well-commented code snippets (Python, HTML, CSS, JS, SQL).
+4. Multi-language support:
+   - English: Natural, professional, clear.
+   - Tamil (தமிழ்): Natural, supportive Tamil when asked or spoken to in Tamil.
+   - Tanglish (Tamil written in English script): Blend Tamil & English comfortably when the user uses Tanglish.
+5. Honesty & Humility: Always acknowledge uncertainty, explain trade-offs, and clarify that you are an AI assistant.
+"""
+
+def detect_language(text: str) -> str:
+    """Detects if text contains Tamil script or Tanglish cues."""
+    # Check for Tamil Unicode range (U+0B80 to U+0BFF)
+    tamil_chars = len(re.findall(r'[\u0B80-\u0BFF]', text))
+    if tamil_chars > 2:
+        return "tamil"
+
+    # Tanglish common keywords
+    tanglish_words = ["vanakkam", "epdi", "irukinga", "theriyuma", "romba", "nalla", "enna", "pathu", 
+                      "solunga", "pannalam", "puriyala", "kooda", "thaan", "solren", "konjam", "paarkalam"]
+    text_lower = text.lower()
+    for tw in tanglish_words:
+        if tw in text_lower:
+            return "tanglish"
+
+    return "english"
+
+def call_gemini_api(api_key: str, model_name: str, messages: List[Dict[str, str]], system_instruction: str = SYSTEM_PROMPT) -> Dict[str, Any]:
+    """
+    Calls the Google Gemini REST API securely.
+    Supports gemini-1.5-flash and gemini-1.5-pro.
+    """
+    if "flash" in model_name.lower():
+        api_model = "gemini-1.5-flash"
+    elif "pro" in model_name.lower():
+        api_model = "gemini-1.5-pro"
+    else:
+        api_model = "gemini-1.5-flash"
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{api_model}:generateContent?key={api_key}"
+
+    # Build Gemini contents structure
+    contents = []
+    for msg in messages:
+        role = "user" if msg.get("role") in ["user", "human"] else "model"
+        contents.append({
+            "role": role,
+            "parts": [{"text": msg.get("content", "")}]
+        })
+
+    payload = {
+        "contents": contents,
+        "systemInstruction": {
+            "parts": [{"text": system_instruction}]
+        },
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 2048
+        }
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"}
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            candidates = res_data.get("candidates", [])
+            if candidates:
+                first_cand = candidates[0]
+                parts = first_cand.get("content", {}).get("parts", [])
+                text_out = "".join(p.get("text", "") for p in parts)
+                return {
+                    "success": True,
+                    "reply": text_out,
+                    "model_used": f"Google {api_model}",
+                    "is_demo": False
+                }
+            return {
+                "success": False,
+                "error": "No response text generated by Gemini.",
+                "reply": "I couldn't generate a response. Please check your prompt or try again."
+            }
+    except urllib.error.HTTPError as e:
+        err_body = e.read().decode("utf-8")
+        try:
+            err_json = json.loads(err_body)
+            msg = err_json.get("error", {}).get("message", str(e))
+        except Exception:
+            msg = str(e)
+        return {
+            "success": False,
+            "error": f"Gemini API error ({e.code}): {msg}",
+            "reply": f"⚠️ Gemini API returned an error ({e.code}): {msg}\n\nPlease verify your API key in Settings or switch to SASHA Smart Engine."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "reply": f"⚠️ Connection error while contacting Gemini API: {str(e)}"
+        }
+
+def sasha_smart_engine_respond(prompt: str, history: List[Dict[str, str]] = None) -> Dict[str, Any]:
+    """
+    Intelligent built-in response engine for Demo & Offline mode.
+    Provides helpful, beginner-friendly explanations for Python, Full Stack,
+    English interview practice, AI concepts, and Tanglish/Tamil queries.
+    """
+    p = prompt.strip()
+    p_lower = p.lower()
+    lang = detect_language(p)
+
+    # 1. Tamil / Tanglish greeting & responses
+    if lang == "tamil":
+        if any(w in p for w in ["வணக்கம்", "ஹலோ", "யார்"]):
+            reply = (
+                "வணக்கம்! 🙏 நான் **SASHA AI**, உங்களுடைய பர்சனல் AI அசிஸ்டன்ட் மற்றும் புரோகிராமிங் வழிகாட்டி!\n\n"
+                "பைதான் (Python), ஃபுல்-ஸ்டாக் டெவலப்மென்ட் (Full Stack), இங்கிலீஷ் கம்யூனிகேஷன் அல்லது உங்களுடைய புராஜெக்ட்களில் "
+                "உங்களுக்கு உதவ நான் தயாராக உள்ளேன். நீங்கள் எதைப் பற்றி இன்று படிக்க அல்லது உருவாக்க விரும்புகிறீர்கள்?"
+            )
+            return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Tamil)", "is_demo": True}
+        else:
+            reply = (
+                f"கண்டிப்பாக! நீங்கள் கேட்ட கேள்விக்கு எளிய விளக்கம்:\n\n"
+                f"**SASHA AI விளக்கம்:**\n"
+                f"நிரலாக்கத்தில் (Programming) ஒவ்வொரு சிறிய அடியும் முக்கியம். உங்கள் சந்தேகங்களை பயமின்றி என்னிடம் கேட்கலாம்.\n\n"
+                f"உதாரணமாக, ஒரு பைதான் கோட் பார்ப்போம்:\n"
+                f"```python\n# Tamil greeting in Python\ndef greet(name):\n    return f'வணக்கம் {name}! Welcome to Python coding!'\n\nprint(greet('Developer'))\n```\n\n"
+                f"இதில் ஏதேனும் சந்தேகம் இருந்தால் மேலும் கேளுங்கள்!"
+            )
+            return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Tamil)", "is_demo": True}
+
+    if lang == "tanglish":
+        reply = (
+            "Hey buddy! Super, Tanglish-la discuss pannalam! 😊\n\n"
+            "Programming learn pandrathu romba exciting-ana journey. Beginner-ah irunthalum bayapadathinga, step by step-ah understand pannikalam.\n\n"
+            "Neenga ketta question-ku intha simple example paaru:\n"
+            "```python\n# Simple Python demonstration\nlearner_name = 'Future Tech Lead'\nlearning_goals = ['Python', 'FastAPI', 'React', 'IT English']\n\nfor goal in learning_goals:\n    print(f'Ready to master: {goal}!')\n```\n\n"
+            "Next enna topic explain pannanum nu sollunga — Variables, Loops, Functions, or Web APIs?"
+        )
+        return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Tanglish)", "is_demo": True}
+
+    # 2. Python Learning Specifics
+    if "python" in p_lower and any(w in p_lower for w in ["learn", "start", "variable", "beginner", "how"]):
+        reply = (
+            "### 🐍 Welcome to Python Fundamentals!\n\n"
+            "Python is widely loved because its syntax reads almost like plain English. Let's start with the 3 core building blocks every beginner needs:\n\n"
+            "#### 1. Variables & Data Types\n"
+            "Variables are like labeled storage containers:\n"
+            "```python\n# Storing information\nassistant_name = \"SASHA AI\"    # String (text)\nversion_number = 1.0           # Float (decimal)\nactive_users = 1               # Integer (whole number)\nis_ready = True                # Boolean (True or False)\n\nprint(f\"{assistant_name} v{version_number} is ready: {is_ready}\")\n```\n\n"
+            "#### 2. Key Collections\n"
+            "- **List**: Ordered and changeable `[1, 2, 3]`\n"
+            "- **Dictionary**: Key-value pairs `{'language': 'Python', 'level': 'Beginner'}`\n\n"
+            "#### 3. Functions\n"
+            "Reusable blocks of code:\n"
+            "```python\ndef calculate_experience(months):\n    return f\"You have been coding for {months} months! Great progress.\"\n```\n\n"
+            "💡 *Tip:* Check out the **Learning Assistant** tab in the sidebar to test code right in our built-in runner and take quick quizzes!"
+        )
+        return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Python Tutor)", "is_demo": True}
+
+    # 3. English Communication for IT
+    if any(w in p_lower for w in ["english", "interview", "communication", "introduce", "speak"]):
+        reply = (
+            "### 💼 English for IT Professionals & Interviews\n\n"
+            "Mastering technical English is all about **clarity, structure, and confidence**.\n\n"
+            "#### The 'STAR' Method for Explaining Projects:\n"
+            "When an interviewer asks: *\"Tell me about a project you built?\"*\n\n"
+            "1. **S - Situation**: \"I wanted to create a personal assistant to accelerate my learning journey.\"\n"
+            "2. **T - Task**: \"My goal was to build a full-stack AI web app called SASHA AI with a Python backend.\"\n"
+            "3. **A - Action**: \"I developed a FastAPI REST server, created a responsive dark UI with Tailwind CSS, and integrated SQLite for chat persistence.\"\n"
+            "4. **R - Result**: \"The application supports real-time chat, project tracking, and interactive quizzes for coding beginners.\"\n\n"
+            "#### Everyday Professional Phrases to Practice:\n"
+            "- *\"Could you please clarify that requirement?\"* (Instead of: *\"What you mean?\"*)\n"
+            "- *\"I'm currently investigating this bug and will update you shortly.\"*\n"
+            "- *\"Let's schedule a quick sync to align on the database schema.\"*\n\n"
+            "Would you like to simulate a mock IT interview question right now?"
+        )
+        return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (IT English Coach)", "is_demo": True}
+
+    # 4. Explain AI Concepts
+    if any(w in p_lower for w in ["ai concept", "llm", "neural", "token", "prompt", "transformer"]):
+        reply = (
+            "### 🤖 Understanding Large Language Models (LLMs) Simply\n\n"
+            "Think of an LLM like an **ultra-advanced auto-complete engine** trained on trillions of lines of human knowledge and code.\n\n"
+            "#### Key Concepts Demystified:\n"
+            "1. **Tokens**: Words are chopped into chunks called tokens (e.g., 'learning' might be 1 or 2 tokens). ~1,000 tokens ≈ 750 words.\n"
+            "2. **Context Window**: How much text the model can \"remember\" in a single conversation.\n"
+            "3. **Temperature**: Controls creativity:\n"
+            "   - `0.0`: Exact, deterministic (best for code and math)\n"
+            "   - `0.7`: Balanced, conversational (SASHA's default!)\n"
+            "   - `1.0+`: High randomness, artistic stories\n"
+            "4. **System Prompt**: Hidden instructions that give the AI its personality and rules (like SASHA's identity as your friendly companion!).\n\n"
+            "In this app, SASHA can connect directly to **Google Gemini 1.5** via API. Go to **Settings ⚙️** to enter your free API key from Google AI Studio anytime!"
+        )
+        return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (AI Explainer)", "is_demo": True}
+
+    # 5. Help Me Build a Website
+    if any(w in p_lower for w in ["website", "build a web", "html", "css", "frontend", "full stack"]):
+        reply = (
+            "### 🌐 Building a Modern Full Stack Web Application\n\n"
+            "A full stack web application consists of three main layers:\n\n"
+            "| Layer | Tech Used in SASHA AI | What It Does |\n"
+            "| :--- | :--- | :--- |\n"
+            "| **Frontend** | HTML5, Tailwind CSS, JavaScript | What you see & interact with (buttons, chat bubbles, glowing cards) |\n"
+            "| **Backend** | Python (FastAPI), Uvicorn | Processes business logic, handles `/api/chat`, verifies data |\n"
+            "| **Database** | SQLite3 (`sasha_ai.db`) | Stores conversations, user projects, and learning stats permanently |\n\n"
+            "#### How They Talk to Each Other:\n"
+            "1. You type a message and press **Send**.\n"
+            "2. Frontend sends a `POST` request to `/api/chat` with your text.\n"
+            "3. FastAPI backend receives it, saves it to SQLite, and calls the AI engine.\n"
+            "4. The response streams back to your screen!\n\n"
+            "You are already running this architecture right now! Check out the **'My Projects'** section to track your portfolio website."
+        )
+        return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Web Architect)", "is_demo": True}
+
+    # 6. General Friendly Response
+    reply = (
+        f"Hey there! I hear you clearly on: *\"{p}\"*\n\n"
+        f"As your personal assistant **SASHA AI**, I'm here to support your tech career every step of the way.\n\n"
+        f"Here are a few things we can do together:\n"
+        f"- 💻 **Write or debug code** in Python, JavaScript, HTML, CSS, or SQL\n"
+        f"- 🗣️ **Practice English speaking & interview answers** for IT companies\n"
+        f"- 🚀 **Work on your development projects** in the 'My Projects' workspace\n"
+        f"- 🧠 **Learn step-by-step** with quizzes and live code execution in the Learning Assistant\n\n"
+        f"What shall we dive into next?"
+    )
+    return {"success": True, "reply": reply, "model_used": "SASHA Smart Engine (Demo Mode)", "is_demo": True}
+
+def generate_chat_response(
+    prompt: str,
+    conversation_history: List[Dict[str, str]],
+    model_preference: str = "auto",
+    user_api_key: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Main entry point for generating an AI response.
+    Checks for available API keys, user preference, or falls back to SASHA Smart Engine.
+    """
+    # 1. Check for API key (Client provided or Server Environment)
+    api_key = user_api_key or os.environ.get("GEMINI_API_KEY", "")
+
+    # If the user explicitly requested the demo engine or no key is present
+    if model_preference == "sasha_demo" or not api_key:
+        return sasha_smart_engine_respond(prompt, conversation_history)
+
+    # 2. Try Gemini API
+    gemini_result = call_gemini_api(api_key, model_preference, conversation_history)
+    if gemini_result.get("success"):
+        return gemini_result
+
+    # 3. If API fails, fall back gracefully to SASHA Smart Engine with a friendly notice
+    demo_fallback = sasha_smart_engine_respond(prompt, conversation_history)
+    demo_fallback["warning"] = f"API call failed ({gemini_result.get('error', 'unknown error')}). Switched to SASHA Smart Engine."
+    return demo_fallback

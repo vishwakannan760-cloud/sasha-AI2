@@ -1,0 +1,5 @@
+fatsia>=0.110.0
+unicorn>=0.28.0
+requests>=2.31.0
+pedantic>=2.0.0
+magnum>=0.17.0
